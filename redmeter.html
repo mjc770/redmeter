@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,7 +79,7 @@
         const TARGET_RED = 45.0;
         let liveChart;
 
-        // Initialize line graph structure correctly
+        // Initialize line graph structure correctly with index pointers
         const graphCtx = document.getElementById('liveGraph').getContext('2d');
         const chartData = {
             labels: Array(30).fill(''),
@@ -155,7 +154,7 @@
                 
                 percentDisplay.innerText = redRatio.toFixed(1) + "%";
                 
-                // FIXED DATA TARGETING SYNTAX HERE:
+                // EXPLICIT FIXED DATA ARRAY TARGETING:
                 chartData.datasets[0].data.shift(); 
                 chartData.datasets[0].data.push(redRatio);
                 liveChart.update('none');
