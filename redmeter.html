@@ -79,23 +79,25 @@
         const TARGET_RED = 45.0;
         let liveChart;
 
-        // Initialize line graph structure correctly with index pointers
+        // 1. Separate, flat memory array to prevent data-structure mapping errors
+        let dataHistory = Array(30).fill(0);
+
+        // Initialize line graph structure safely
         const graphCtx = document.getElementById('liveGraph').getContext('2d');
-        const chartData = {
-            labels: Array(30).fill(''),
-            datasets: [{
-                data: Array(30).fill(0),
-                borderColor: '#ff4444',
-                borderWidth: 3,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.2
-            }]
-        };
         
         liveChart = new Chart(graphCtx, {
             type: 'line',
-            data: chartData,
+            data: {
+                labels: Array(30).fill(''),
+                datasets: [{
+                    data: dataHistory, // Reference the flat memory array
+                    borderColor: '#ff4444',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.2
+                }]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -154,9 +156,12 @@
                 
                 percentDisplay.innerText = redRatio.toFixed(1) + "%";
                 
-                // EXPLICIT FIXED DATA ARRAY TARGETING:
-                chartData.datasets[0].data.shift(); 
-                chartData.datasets[0].data.push(redRatio);
+                // 2. Safe flat-array operations
+                dataHistory.shift(); 
+                dataHistory.push(redRatio);
+                
+                // Directly tell Chart.js where to find the fresh data update
+                liveChart.data.datasets[0].data = dataHistory;
                 liveChart.update('none');
 
                 checkAudio(redRatio);
