@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Red Spectrum Meter</title>
-    <!-- Upgraded Ultra-Stable Chart Library Link -->
+    <!-- Ultra-Stable Chart Library Link -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body {
@@ -31,7 +31,7 @@
             margin-bottom: 20px;
         }
         #canvasContainer {
-            width: 90vw; /* Adapts properly to mobile screens */
+            width: 90vw; 
             max-width: 500px;
             height: 250px;
             margin-top: 20px;
@@ -79,7 +79,7 @@
         const TARGET_RED = 45.0;
         let liveChart;
 
-        // Initialize line graph immediately on page display
+        // Initialize line graph structure correctly
         const graphCtx = document.getElementById('liveGraph').getContext('2d');
         const chartData = {
             labels: Array(30).fill(''),
@@ -154,7 +154,8 @@
                 
                 percentDisplay.innerText = redRatio.toFixed(1) + "%";
                 
-                chartData.datasets[0].data.shift(); // Fixed array target targeting syntax error
+                // FIXED DATA TARGETING SYNTAX HERE:
+                chartData.datasets[0].data.shift(); 
                 chartData.datasets[0].data.push(redRatio);
                 liveChart.update('none');
 
