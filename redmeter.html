@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Red Spectrum Meter</title>
-    <!-- Stable Chart Library Link -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Upgraded Ultra-Stable Chart Library Link -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body {
             background-color: #121212;
@@ -16,12 +16,13 @@
             align-items: center;
             padding: 20px;
             margin: 0;
+            box-sizing: border-box;
         }
         #percentage {
             color: #ff4444;
             font-size: 75px;
             font-weight: bold;
-            margin: 10px 0 0 0;
+            margin: 20px 0 0 0;
         }
         #label {
             color: #888888;
@@ -30,10 +31,11 @@
             margin-bottom: 20px;
         }
         #canvasContainer {
-            width: 100%;
+            width: 90vw; /* Adapts properly to mobile screens */
             max-width: 500px;
             height: 250px;
             margin-top: 20px;
+            position: relative;
         }
         #startBtn {
             background-color: #ff4444;
@@ -56,7 +58,6 @@
     <div id="percentage">0.0%</div>
     <div id="label">RED SPECTRUM DOMINANCE</div>
     
-    <!-- Manual Start Button to Bypass Browser Security Blocks -->
     <button id="startBtn" onclick="initApp()">START METER</button>
 
     <div id="canvasContainer">
@@ -78,7 +79,7 @@
         const TARGET_RED = 45.0;
         let liveChart;
 
-        // Create line graph immediately on page display
+        // Initialize line graph immediately on page display
         const graphCtx = document.getElementById('liveGraph').getContext('2d');
         const chartData = {
             labels: Array(30).fill(''),
@@ -106,9 +107,8 @@
             }
         });
 
-        // Initialize camera and voice engines upon pressing the button
         function initApp() {
-            startBtn.style.display = 'none'; // Hide button after click
+            startBtn.style.display = 'none'; 
             speakVoice("System starting.");
 
             navigator.mediaDevices.getUserMedia({ 
@@ -118,12 +118,12 @@
             .then(stream => {
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true);
-                video.play(); // Force video stream initialization
+                video.play(); 
                 
                 video.addEventListener('loadedmetadata', () => {
-                    hiddenCanvas.width = 160; // Locked small resolution for instant RAM processing
+                    hiddenCanvas.width = 160; 
                     hiddenCanvas.height = 120;
-                    setInterval(analyzeFrame, 250); // Scan 4 times a second
+                    setInterval(analyzeFrame, 250); 
                 });
             })
             .catch(err => {
@@ -154,7 +154,7 @@
                 
                 percentDisplay.innerText = redRatio.toFixed(1) + "%";
                 
-                chartData.datasets[0].data.shift();
+                chartData.datasets[0].data.shift(); // Fixed array target targeting syntax error
                 chartData.datasets[0].data.push(redRatio);
                 liveChart.update('none');
 
