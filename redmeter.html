@@ -1,1 +1,189 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Red Spectrum Meter</title>
+    <!-- Ultra-Stable Chart Library Link -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        #percentage {
+            color: #ff4444;
+            font-size: 75px;
+            font-weight: bold;
+            margin: 20px 0 0 0;
+        }
+        #label {
+            color: #888888;
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+        #canvasContainer {
+            width: 90vw; 
+            max-width: 500px;
+            height: 250px;
+            margin-top: 20px;
+            position: relative;
+        }
+        #startBtn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="percentage">0.0%</div>
+    <div id="label">RED SPECTRUM DOMINANCE</div>
+    
+    <button id="startBtn" onclick="initApp()">START METER</button>
+
+    <div id="canvasContainer">
+        <canvas id="liveGraph"></canvas>
+    </div>
+
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="hiddenCanvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const hiddenCanvas = document.getElementById('hiddenCanvas');
+        const ctx = hiddenCanvas.getContext('2d');
+        const percentDisplay = document.getElementById('percentage');
+        const startBtn = document.getElementById('startBtn');
+        
+        let lastSpeechTime = 0;
+        let peakAlertTriggered = false;
+        const TARGET_RED = 45.0;
+        let liveChart;
+
+        // Initialize line graph structure correctly
+        const graphCtx = document.getElementById('liveGraph').getContext('2d');
+        const chartData = {
+            labels: Array(30).fill(''),
+            datasets: [{
+                data: Array(30).fill(0),
+                borderColor: '#ff4444',
+                borderWidth: 3,
+                pointRadius: 0,
+                fill: false,
+                tension: 0.2
+            }]
+        };
+        
+        liveChart = new Chart(graphCtx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { min: 20, max: 60, grid: { color: '#333' }, ticks: { color: '#fff' } },
+                    x: { display: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        function initApp() {
+            startBtn.style.display = 'none'; 
+            speakVoice("System starting.");
+
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" }, 
+                audio: false 
+            })
+            .then(stream => {
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play(); 
+                
+                video.addEventListener('loadedmetadata', () => {
+                    hiddenCanvas.width = 160; 
+                    hiddenCanvas.height = 120;
+                    setInterval(analyzeFrame, 250); 
+                });
+            })
+            .catch(err => {
+                alert("Camera Blocked: Please open Chrome App Info settings and manually grant camera permissions.");
+            });
+        }
+
+        function analyzeFrame() {
+            if (video.paused || video.ended) return;
+            
+            ctx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const imgData = ctx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const data = imgData.data;
+
+            let totalRed = 0;
+            let totalGreen = 0;
+            let totalBlue = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                totalRed += data[i];     
+                totalGreen += data[i+1]; 
+                totalBlue += data[i+2];  
+            }
+
+            const grandTotal = totalRed + totalGreen + totalBlue;
+            if (grandTotal > 0) {
+                const redRatio = (totalRed / grandTotal) * 100;
+                
+                percentDisplay.innerText = redRatio.toFixed(1) + "%";
+                
+                // FIXED DATA TARGETING SYNTAX HERE:
+                chartData.datasets[0].data.shift(); 
+                chartData.datasets[0].data.push(redRatio);
+                liveChart.update('none');
+
+                checkAudio(redRatio);
+            }
+        }
+
+        function checkAudio(currentRed) {
+            const now = Date.now();
+
+            if (currentRed >= TARGET_RED && !peakAlertTriggered) {
+                peakAlertTriggered = true;
+                speakVoice("Red spectrum peak reached.");
+            } else if (currentRed < (TARGET_RED - 3.0)) {
+                peakAlertTriggered = false;
+            }
+
+            if (now - lastSpeechTime > 15000) {
+                lastSpeechTime = now;
+                speakVoice("Red level is " + Math.round(currentRed) + " percent");
+            }
+        }
+
+        function speakVoice(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
