@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Red Spectrum Meter</title>
     <!-- Ultra-Stable Chart Library Link -->
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         body {
             background-color: #121212;
@@ -79,7 +79,7 @@
         const TARGET_RED = 45.0;
         let liveChart;
 
-        // 1. Separate, flat memory array to prevent data-structure mapping errors
+        // 1. Set baseline historical array memory
         let dataHistory = Array(30).fill(0);
 
         // Initialize line graph structure safely
@@ -90,7 +90,7 @@
             data: {
                 labels: Array(30).fill(''),
                 datasets: [{
-                    data: dataHistory, // Reference the flat memory array
+                    data: dataHistory, 
                     borderColor: '#ff4444',
                     borderWidth: 3,
                     pointRadius: 0,
@@ -156,11 +156,11 @@
                 
                 percentDisplay.innerText = redRatio.toFixed(1) + "%";
                 
-                // 2. Safe flat-array operations
+                // Roll array contents smoothly
                 dataHistory.shift(); 
                 dataHistory.push(redRatio);
                 
-                // Directly tell Chart.js where to find the fresh data update
+                // CRITICAL FIXED SPECIFIC TARGET POINTER INDEX HERE [0]:
                 liveChart.data.datasets[0].data = dataHistory;
                 liveChart.update('none');
 
